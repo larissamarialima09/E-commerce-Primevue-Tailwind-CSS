@@ -14,17 +14,21 @@ export default class Cart{
 
     addItem(product: Product) {
     const existItem = this.list.find(item=> item.product.name === product.name);
+
         if (existItem) {
          existItem.quantity ++;
         }else {
       this.list.push({ product, quantity: 1 });
     }
+
     this.total ++;
     this.price += product.price;
   }
+
     decItem(id: number) {
-   const item = this.list.find(  i => i.product.id === id);
+   const item = this.list.find(i => i.product.id === id);
     if (!item) return;
+
     item.quantity--;
 
     this.total--;
@@ -35,8 +39,9 @@ export default class Cart{
     }
   }
 
-     excludeItem(productName: string) {
-    const index = this.list.findIndex( item => item.product.name === productName);
+     excludeItem(productId: number) {
+    const index = this.list.findIndex( item => item.product.id == productId);
+    
     if (index !== -1) {
 
       const item = this.list[index];
