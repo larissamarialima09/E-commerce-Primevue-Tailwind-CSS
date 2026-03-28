@@ -9,6 +9,8 @@ import App from './App.vue'
 import router from './router'
 import { setPrimeVue } from './modules/primevue.modules'
 import ConfirmationService from 'primevue/confirmationservice'
+import Menubar from 'primevue/menubar';
+import Button from 'primevue/button';
 
 
 
@@ -20,5 +22,8 @@ app.use(ConfirmationService)
 
 app.use(createPinia())
 app.use(router)
+
+app.component('Menubar', Menubar)
+app.component('Button', Button)
 
 app.mount('#app')

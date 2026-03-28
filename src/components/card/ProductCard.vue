@@ -1,83 +1,41 @@
 <template>
- <Card
- class="h-full flex flex-col overflow-hidden border border-gray-700"
- :style="{width: '100%', minWidth:'200px',maxWidth: '302px'}" >
-
-     <template #header>
-      <div class="w-full h-64 overflow-hidden"> 
-   <img 
-    :src="product.image" 
-    :alt="product.name" 
-    class="w-full h-full object-cover" 
-  />
-   </div>
-      </template>
-
-     <template #title>
-     <h1 class="font-bold text-lg">{{ product.name }}</h1>
-     </template>
-
-
-    <template #content>
-    <p class="text-white-600 mb-2">{{ product.description }}</p>
-    <p class="font-bold mt-2">R$: {{ product.price }},00</p>
-    </template>
-
-    <template #footer>
-    <Button 
-     label="Adicionar" 
-     @click="$emit('addItem', product)" 
-    class="w-full py-3" 
+  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden hover:border-emerald-500/50 transition-all group">
+    <div class="aspect-square w-full bg-white overflow-hidden p-4">
+      <img 
+        :src="product.image" 
+        :alt="product.name" 
+        class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" 
       />
+    </div>
 
-    </template>
- </Card>
+    <div class="p-5">
+      <span class="text-[10px] uppercase tracking-widest text-emerald-500 font-bold">
+        {{ product.category?.title || 'Gamer' }}
+      </span>
+      <h3 class="text-white font-bold text-lg mt-1 truncate">{{ product.name }}</h3>
+      
+      <div class="flex items-center justify-between mt-4">
+        <p class="text-zinc-400 text-sm">A partir de</p>
+        <p class="text-white font-black text-xl">R$ {{ product.price }},00</p>
+      </div>
+      
+      <div class="mt-4 text-center text-xs text-zinc-500 group-hover:text-emerald-400 transition-colors italic">
+        Clique para ver mais detalhes
+      </div>
+    </div>
+  </div>
 </template>
 
-
 <script lang="ts">
-import { defineComponent } from "vue"
-import Card from "primevue/card"
-import Button from "primevue/button"
-import type { Product } from "../models/product.model"
+import { defineComponent, PropType } from 'vue'
+import { Product } from '@/model/product.model'
 
 export default defineComponent({
-  components: { Card, Button },
   props: {
     product: {
-      type: Object as () => Product,
+      type: Object as PropType<Product>,
       required: true
     }
   }
-
 })
 </script>
-
-<style scoped>
-.image-container {
-    width: 100%;
-    height: 200px; 
-    overflow: hidden;
-    background-color: #1a1a1a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.product-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; 
-    padding: 10px;
-}
-:deep(.p-card) {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-:deep(.p-card-body) {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-</style>
