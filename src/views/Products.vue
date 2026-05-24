@@ -12,11 +12,7 @@
           :key="product.id"
           class="cursor-pointer transition-transform hover:scale-105"
         >
-          <ProductCard
-            :product="product"
-            @click="goToDetail(product)"
-            @addItem="addItem"
-          />
+          <ProductCard :product="product" @click="goToDetail(product)" @addItem="addItem" />
         </div>
       </section>
 
@@ -29,35 +25,31 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { store } from '@/store' 
+import { store } from '@/store'
 import { Product } from '@/model/product.model'
 import ProductCard from '@/components/card/ProductCard.vue'
 
 export default defineComponent({
   name: 'ProductsPage',
-  components: { 
-    ProductCard 
+  components: {
+    ProductCard,
   },
   data() {
     return {
-      
-      store 
+      store,
     }
   },
   methods: {
-    
     addItem(product: Product) {
       store.cart.addItem(product)
-      
     },
 
-
     goToDetail(product: Product) {
-      this.$router.push({ 
-        name: 'product-detail', 
-        params: { id: product.id.toString() } 
+      this.$router.push({
+        name: 'product-detail',
+        params: { id: product.id.toString() },
       })
-    }
-  }
+    },
+  },
 })
 </script>
