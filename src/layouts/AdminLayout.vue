@@ -9,16 +9,16 @@
       </div>
 
       <nav class="flex flex-col gap-2 flex-1">
-        <RouterLink 
-          to="/admin/dashboard" 
+        <RouterLink
+          to="/admin/dashboard"
           class="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
           active-class="bg-emerald-500/10 text-emerald-500 font-semibold"
         >
           <i class="pi pi-chart-bar"></i> Dashboard
         </RouterLink>
-        
-        <RouterLink 
-          to="/admin/products" 
+
+        <RouterLink
+          to="/admin/products"
           class="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
           active-class="bg-emerald-500/10 text-emerald-500 font-semibold"
         >
@@ -27,12 +27,15 @@
       </nav>
 
       <div class="mt-auto pt-6 border-t border-zinc-800 flex flex-col gap-4">
-        <RouterLink to="/" class="text-zinc-500 hover:text-white flex items-center gap-2 text-sm transition-colors">
+        <RouterLink
+          to="/"
+          class="text-zinc-500 hover:text-white flex items-center gap-2 text-sm transition-colors"
+        >
           <i class="pi pi-arrow-left"></i> Voltar para Loja
         </RouterLink>
 
-        <button 
-          @click="handleLogout" 
+        <button
+          @click="handleLogout"
           class="text-zinc-500 hover:text-red-400 flex items-center gap-2 text-sm w-full text-left transition-colors"
         >
           <i class="pi pi-sign-out"></i> Sair do Painel
@@ -59,24 +62,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router'; // Importado useRouter aqui
-import Breadcrumb from 'primevue/breadcrumb';
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import Breadcrumb from 'primevue/breadcrumb'
+import { useAuthStore } from '@/stores/auth'
 
-const route = useRoute();
-const router = useRouter(); // Inicializado aqui
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const breadcrumbItems = computed(() => {
-  const pathArray = route.path.split('/').filter(p => p);
-  return pathArray.map(path => ({ 
-    label: path.replace(/-/g, ' ') 
-  }));
-});
+  const pathArray = route.path.split('/').filter((p) => p)
+  return pathArray.map((path) => ({
+    label: path.replace(/-/g, ' '),
+  }))
+})
 
-// FUNÇÃO DE LOGOUT
 const handleLogout = () => {
-  localStorage.removeItem('isAuth');
-  localStorage.removeItem('userRole');
-  router.push('/'); // Redireciona para a Home
-};
+  authStore.logout()
+  router.push({ name: 'home' })
+}
 </script>
