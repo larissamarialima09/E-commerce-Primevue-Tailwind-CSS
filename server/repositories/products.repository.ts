@@ -1,18 +1,19 @@
 import { products } from '../data/products.js'
-import type { CreateProductDTO, ProductFiltersDTO, UpdateProductDTO } from '../dtos/product.dto.js'
+import type { ProductFiltersDTO } from '../dtos/product.dto.js'
 import type { Product } from '../entities/product.entity.js'
 
-export const productsRepository = {
-  findAll(filters: ProductFiltersDTO = {}): Product[] {
-    if (!filters.category) {
-      return products
-    }
+export const productRepository = {
+  getAllProducts(filters: ProductFiltersDTO): Product[] {
+    const start = (filters.page - 1) * filters.size
+    const filteredProducts = filters.category
+      ? products.filter((product) => product.categoryId === filters.category)
+      : products
 
-    return products.filter((product) => product.categoryId === filters.category)
+    return filteredProducts.slice(start, start + filters.size)
   },
 
-  findById(id: string): Product | undefined {
-    return products.find((product) => product.id === id)
+  getProductById(id: string): Product | null {
+    return products.find((product) => product.id === id) ?? null
   },
 
   findByName(name: string): Product | undefined {
@@ -25,42 +26,35 @@ export const productsRepository = {
     return products.some((product) => product.categoryId === categoryId)
   },
 
-  create(data: CreateProductDTO): Product {
-    const product: Product = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      price: data.price,
-      categoryId: data.categoryId,
-    }
-
+  createProduct(product: Product): Product {
     products.push(product)
 
     return product
   },
 
-  update(id: string, data: UpdateProductDTO): Product | undefined {
-    const product = this.findById(id)
+  updateProduct(product: Product): Product | null {
+    const index = products.findIndex((item) => item.id === product.id)
 
-    if (!product) {
-      return undefined
+    if (index < 0) {
+      return null
     }
 
-    product.name = data.name
-    product.price = data.price
-    product.categoryId = data.categoryId
+    products[index] = product
 
     return product
   },
 
-  delete(id: string): boolean {
+  deleteProduct(id: string): Product | null {
     const index = products.findIndex((product) => product.id === id)
 
     if (index < 0) {
-      return false
+      return null
     }
 
-    products.splice(index, 1)
+    const [product] = products.splice(index, 1)
 
-    return true
+    return product ?? null
   },
 }
+
+export const productsRepository = productRepository

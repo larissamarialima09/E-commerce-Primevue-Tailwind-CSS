@@ -1,81 +1,76 @@
-import type {
-  CategoryListDTO,
-  CreateCategoryDTO,
-  UpdateCategoryDTO,
-} from '../dtos/category.dto.js'
-import type { Category } from '../entities/category.entity.js'
-import { categoriesRepository } from '../repositories/categories.repository.js'
+import { CategoryListDTO, type CreateCategoryDTO, type UpdateCategoryDTO } from '../dtos/category.dto.js'
+import { Category } from '../entities/category.entity.js'
+import { AppError } from '../errors/app-error.js'
+import { categoryRepository } from '../repositories/categories.repository.js'
 import { productsRepository } from '../repositories/products.repository.js'
 
-export type CategoryServiceResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; message: string }
-
-export const categoriesService = {
-  list(page: number, size: number): CategoryListDTO {
-    return {
+export class CategoryService {
+  getAll(page: number, size: number): CategoryListDTO {
+    return CategoryListDTO.create({
       page,
       size,
-      total: categoriesRepository.count(),
-      data: categoriesRepository.findAll({ page, size }),
-    }
-  },
+      total: categoryRepository.count(),
+      data: categoryRepository.getAllCategories({ page, size }),
+    })
+  }
 
-  getById(id: string): CategoryServiceResult<Category> {
-    const category = categoriesRepository.findById(id)
+  getById(id: string): Category {
+    const category = categoryRepository.getCategoryById(id)
 
     if (!category) {
-      return { ok: false, status: 404, message: 'Categoria nao encontrada.' }
+      throw new AppError('Categoria nao encontrada.', 404)
     }
 
-    return { ok: true, data: category }
-  },
+    return category
+  }
 
-  create(data: CreateCategoryDTO): CategoryServiceResult<Category> {
-    const existingCategory = categoriesRepository.findByName(data.name)
+  create(data: CreateCategoryDTO): Category {
+    const category = Category.create(data)
+    const existingCategory = categoryRepository.findByName(category.name)
 
     if (existingCategory) {
-      return { ok: false, status: 409, message: 'Ja existe uma categoria com esse nome.' }
+      throw new AppError('Ja existe uma categoria com esse nome.', 409)
     }
 
-    return { ok: true, data: categoriesRepository.create(data) }
-  },
+    return categoryRepository.createCategory(category)
+  }
 
-  update(id: string, data: UpdateCategoryDTO): CategoryServiceResult<Category> {
-    const category = categoriesRepository.findById(id)
+  update(id: string, data: UpdateCategoryDTO): Category {
+    const category = categoryRepository.getCategoryById(id)
 
     if (!category) {
-      return { ok: false, status: 404, message: 'Categoria nao encontrada.' }
+      throw new AppError('Categoria nao encontrada.', 404)
     }
 
-    const existingCategory = categoriesRepository.findByName(data.name)
+    category.rename(data.name)
+    const existingCategory = categoryRepository.findByName(category.name)
 
     if (existingCategory && existingCategory.id !== id) {
-      return { ok: false, status: 409, message: 'Ja existe uma categoria com esse nome.' }
+      throw new AppError('Ja existe uma categoria com esse nome.', 409)
     }
 
-    const updatedCategory = categoriesRepository.update(id, data)
+    const updatedCategory = categoryRepository.updateCategory(category)
 
-    return { ok: true, data: updatedCategory as Category }
-  },
+    if (!updatedCategory) {
+      throw new AppError('Categoria nao encontrada.', 404)
+    }
 
-  delete(id: string): CategoryServiceResult<null> {
-    const category = categoriesRepository.findById(id)
+    return updatedCategory
+  }
+
+  delete(id: string): void {
+    const category = categoryRepository.getCategoryById(id)
 
     if (!category) {
-      return { ok: false, status: 404, message: 'Categoria nao encontrada.' }
+      throw new AppError('Categoria nao encontrada.', 404)
     }
 
     if (productsRepository.existsByCategoryId(id)) {
-      return {
-        ok: false,
-        status: 409,
-        message: 'Categoria nao pode ser removida porque possui produtos vinculados.',
-      }
+      throw new AppError('Categoria nao pode ser removida porque possui produtos vinculados.', 409)
     }
 
-    categoriesRepository.delete(id)
-
-    return { ok: true, data: null }
-  },
+    categoryRepository.deleteCategory(id)
+  }
 }
+
+export const categoriesService = new CategoryService()

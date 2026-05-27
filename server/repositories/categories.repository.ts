@@ -1,5 +1,4 @@
 import { categories } from '../data/categories.js'
-import type { CreateCategoryDTO, UpdateCategoryDTO } from '../dtos/category.dto.js'
 import type { Category } from '../entities/category.entity.js'
 
 export interface CategoryPagination {
@@ -7,8 +6,8 @@ export interface CategoryPagination {
   size: number
 }
 
-export const categoriesRepository = {
-  findAll({ page, size }: CategoryPagination): Category[] {
+export const categoryRepository = {
+  getAllCategories({ page, size }: CategoryPagination): Category[] {
     const start = (page - 1) * size
 
     return categories.slice(start, start + size)
@@ -18,8 +17,8 @@ export const categoriesRepository = {
     return categories.length
   },
 
-  findById(id: string): Category | undefined {
-    return categories.find((category) => category.id === id)
+  getCategoryById(id: string): Category | null {
+    return categories.find((category) => category.id === id) ?? null
   },
 
   findByName(name: string): Category | undefined {
@@ -28,38 +27,35 @@ export const categoriesRepository = {
     return categories.find((category) => category.name.trim().toLowerCase() === normalizedName)
   },
 
-  create(data: CreateCategoryDTO): Category {
-    const category: Category = {
-      id: crypto.randomUUID(),
-      name: data.name,
-    }
-
+  createCategory(category: Category): Category {
     categories.push(category)
 
     return category
   },
 
-  update(id: string, data: UpdateCategoryDTO): Category | undefined {
-    const category = this.findById(id)
+  updateCategory(category: Category): Category | null {
+    const index = categories.findIndex((item) => item.id === category.id)
 
-    if (!category) {
-      return undefined
+    if (index < 0) {
+      return null
     }
 
-    category.name = data.name
+    categories[index] = category
 
     return category
   },
 
-  delete(id: string): boolean {
+  deleteCategory(id: string): Category | null {
     const index = categories.findIndex((category) => category.id === id)
 
     if (index < 0) {
-      return false
+      return null
     }
 
-    categories.splice(index, 1)
+    const [category] = categories.splice(index, 1)
 
-    return true
+    return category ?? null
   },
 }
+
+export const categoriesRepository = categoryRepository

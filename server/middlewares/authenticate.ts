@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express'
 import { verifyToken } from '../services/auth.service.js'
 
-export function authenticate(req: Request, res: Response, next: NextFunction): void {
+export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
   const authorization = req.headers.authorization
 
   if (!authorization?.startsWith('Bearer ')) {
@@ -20,3 +20,5 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   res.locals.user = payload
   next()
 }
+
+export const authenticate = authMiddleware
