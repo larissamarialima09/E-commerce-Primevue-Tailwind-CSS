@@ -19,3 +19,8 @@ export const productParamsSchema = z.object({
     id: z.uuid('ID do produto deve ser um UUID valido.'),
   }),
 })
+
+export const updateProductSchema = z.object({
+  params: productParamsSchema.shape.params,
+  body: createProductSchema.shape.body,
+})

@@ -1,7 +1,4 @@
-export interface Category {
-  id: string
-  name: string
-}
+import type { Category } from '../entities/category.entity.js'
 
 export const categories: Category[] = [
   {
@@ -10,6 +7,6 @@ export const categories: Category[] = [
   },
   {
     id: '22222222-2222-4222-8222-222222222222',
-    name: 'Moveis',
+    name: 'Perifericos',
   },
 ]

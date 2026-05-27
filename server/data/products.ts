@@ -1,9 +1,4 @@
-export interface Product {
-  id: string
-  name: string
-  categoryId: string
-  price: number
-}
+import type { Product } from '../entities/product.entity.js'
 
 export const products: Product[] = [
   {
