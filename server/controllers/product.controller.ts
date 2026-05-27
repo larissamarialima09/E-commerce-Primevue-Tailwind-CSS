@@ -1,61 +1,76 @@
-import type { Request, Response } from 'express'
-import type { CreateProductDTO, ProductListDTO, UpdateProductDTO } from '../dtos/product.dto.js'
-import { productsService } from '../services/products.service.js'
+import type { NextFunction, Request, Response } from 'express'
+import {
+  CreateProductDTO,
+  ProductListDTO,
+  ProductResponseDTO,
+  UpdateProductDTO,
+} from '../dtos/product.dto.js'
+import type { ProductService } from '../services/products.service.js'
+import {
+  createProductSchema,
+  productParamsSchema,
+  productQuerySchema,
+  updateProductSchema,
+} from '../schemas/product.schema.js'
 
-export function listProducts(_req: Request, res: Response): void {
-  const query = res.locals.validated.query as { category?: string }
-  const category = query.category
-  const response: ProductListDTO = {
-    category: category ?? null,
-    data: productsService.list({ category }),
+export class ProductController {
+  constructor(private readonly service: ProductService) {}
+
+  getAll = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { query } = productQuerySchema.parse({ query: req.query })
+      const products = this.service.getAll(query)
+
+      res.status(200).json(ProductListDTO.create({ page: query.page, size: query.size, data: products }))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(200).json(response)
-}
+  getById = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { params } = productParamsSchema.parse({ params: req.params })
+      const product = this.service.getById(params.id)
 
-export function createProduct(req: Request<unknown, unknown, CreateProductDTO>, res: Response): void {
-  const result = productsService.create(req.body)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(200).json(ProductResponseDTO.create(product))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(201).json(result.data)
-}
+  create = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { body } = createProductSchema.parse({ body: req.body })
+      const product = this.service.create(CreateProductDTO.create(body))
 
-export function getProductById(req: Request<{ id: string }>, res: Response): void {
-  const result = productsService.getById(req.params.id)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(201).json(ProductResponseDTO.create(product))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(200).json(result.data)
-}
+  update = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { params, body } = updateProductSchema.parse({
+        params: req.params,
+        body: req.body,
+      })
+      const product = this.service.update(params.id, UpdateProductDTO.create(body))
 
-export function updateProduct(
-  req: Request<{ id: string }, unknown, UpdateProductDTO>,
-  res: Response,
-): void {
-  const result = productsService.update(req.params.id, req.body)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(200).json(ProductResponseDTO.create(product))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(200).json(result.data)
-}
+  delete = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { params } = productParamsSchema.parse({ params: req.params })
 
-export function deleteProduct(req: Request<{ id: string }>, res: Response): void {
-  const result = productsService.delete(req.params.id)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      this.service.delete(params.id)
+      res.status(204).send()
+    } catch (error) {
+      next(error)
+    }
   }
-
-  res.status(204).send()
 }

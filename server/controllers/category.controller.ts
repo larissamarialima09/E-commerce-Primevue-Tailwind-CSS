@@ -1,57 +1,76 @@
-import type { Request, Response } from 'express'
-import type { CreateCategoryDTO, UpdateCategoryDTO } from '../dtos/category.dto.js'
-import { categoriesService } from '../services/categories.service.js'
+import type { NextFunction, Request, Response } from 'express'
+import {
+  CategoryListDTO,
+  CategoryResponseDTO,
+  CreateCategoryDTO,
+  UpdateCategoryDTO,
+} from '../dtos/category.dto.js'
+import type { CategoryService } from '../services/categories.service.js'
+import {
+  categoryParamsSchema,
+  categoryQueryPaginationSchema,
+  createCategorySchema,
+  updateCategorySchema,
+} from '../schemas/category.schema.js'
 
-export function listCategories(_req: Request, res: Response): void {
-  const query = res.locals.validated.query as { page: number; size: number }
-  const { page, size } = query
+export class CategoryController {
+  constructor(private readonly service: CategoryService) {}
 
-  res.status(200).json(categoriesService.list(page, size))
-}
+  getAll = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { query } = categoryQueryPaginationSchema.parse({ query: req.query })
+      const result = this.service.getAll(query.page, query.size)
 
-export function getCategoryById(req: Request<{ id: string }>, res: Response): void {
-  const result = categoriesService.getById(req.params.id)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(200).json(result)
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(200).json(result.data)
-}
+  getById = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { params } = categoryParamsSchema.parse({ params: req.params })
+      const category = this.service.getById(params.id)
 
-export function createCategory(req: Request<unknown, unknown, CreateCategoryDTO>, res: Response): void {
-  const result = categoriesService.create(req.body)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(200).json(CategoryResponseDTO.create(category))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(201).json(result.data)
-}
+  create = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { body } = createCategorySchema.parse({ body: req.body })
+      const category = this.service.create(CreateCategoryDTO.create(body))
 
-export function updateCategory(
-  req: Request<{ id: string }, unknown, UpdateCategoryDTO>,
-  res: Response,
-): void {
-  const result = categoriesService.update(req.params.id, req.body)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(201).json(CategoryResponseDTO.create(category))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(200).json(result.data)
-}
+  update = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { params, body } = updateCategorySchema.parse({
+        params: req.params,
+        body: req.body,
+      })
+      const category = this.service.update(params.id, UpdateCategoryDTO.create(body))
 
-export function deleteCategory(req: Request<{ id: string }>, res: Response): void {
-  const result = categoriesService.delete(req.params.id)
-
-  if (!result.ok) {
-    res.status(result.status).json({ message: result.message })
-    return
+      res.status(200).json(CategoryResponseDTO.create(category))
+    } catch (error) {
+      next(error)
+    }
   }
 
-  res.status(204).send()
+  delete = (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const { params } = categoryParamsSchema.parse({ params: req.params })
+
+      this.service.delete(params.id)
+      res.status(204).send()
+    } catch (error) {
+      next(error)
+    }
+  }
 }

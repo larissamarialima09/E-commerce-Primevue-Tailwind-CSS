@@ -3,87 +3,83 @@ import type {
   ProductFiltersDTO,
   UpdateProductDTO,
 } from '../dtos/product.dto.js'
-import type { Product } from '../entities/product.entity.js'
-import { categoriesRepository } from '../repositories/categories.repository.js'
-import { productsRepository } from '../repositories/products.repository.js'
+import { Product } from '../entities/product.entity.js'
+import { AppError } from '../errors/app-error.js'
+import { categoryRepository } from '../repositories/categories.repository.js'
+import { productRepository } from '../repositories/products.repository.js'
 
-export type ProductServiceResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; message: string }
+export class ProductService {
+  getAll(filters: ProductFiltersDTO): Product[] {
+    return productRepository.getAllProducts(filters)
+  }
 
-type ProductValidationResult = { ok: true } | { ok: false; status: number; message: string }
-
-export const productsService = {
-  list(filters: ProductFiltersDTO): Product[] {
-    return productsRepository.findAll(filters)
-  },
-
-  getById(id: string): ProductServiceResult<Product> {
-    const product = productsRepository.findById(id)
+  getById(id: string): Product {
+    const product = productRepository.getProductById(id)
 
     if (!product) {
-      return { ok: false, status: 404, message: 'Produto nao encontrado.' }
+      throw new AppError('Produto nao encontrado.', 404)
     }
 
-    return { ok: true, data: product }
-  },
+    return product
+  }
 
-  create(data: CreateProductDTO): ProductServiceResult<Product> {
-    const validation = this.validateProductData(data)
-
-    if (!validation.ok) {
-      return validation
-    }
-
-    return { ok: true, data: productsRepository.create(data) }
-  },
-
-  update(id: string, data: UpdateProductDTO): ProductServiceResult<Product> {
-    const product = productsRepository.findById(id)
-
-    if (!product) {
-      return { ok: false, status: 404, message: 'Produto nao encontrado.' }
-    }
-
-    const validation = this.validateProductData(data, id)
-
-    if (!validation.ok) {
-      return validation
-    }
-
-    const updatedProduct = productsRepository.update(id, data)
-
-    return { ok: true, data: updatedProduct as Product }
-  },
-
-  delete(id: string): ProductServiceResult<null> {
-    const product = productsRepository.findById(id)
-
-    if (!product) {
-      return { ok: false, status: 404, message: 'Produto nao encontrado.' }
-    }
-
-    productsRepository.delete(id)
-
-    return { ok: true, data: null }
-  },
-
-  validateProductData(
-    data: CreateProductDTO | UpdateProductDTO,
-    productId?: string,
-  ): ProductValidationResult {
-    const category = categoriesRepository.findById(data.categoryId)
+  create(data: CreateProductDTO): Product {
+    const category = categoryRepository.getCategoryById(data.categoryId)
 
     if (!category) {
-      return { ok: false, status: 404, message: 'Categoria informada nao existe.' }
+      throw new AppError('Categoria informada nao existe.', 404)
     }
 
-    const existingProduct = productsRepository.findByName(data.name)
+    const product = Product.create(data)
+    const existingProduct = productRepository.findByName(product.name)
 
-    if (existingProduct && existingProduct.id !== productId) {
-      return { ok: false, status: 409, message: 'Ja existe um produto com esse nome.' }
+    if (existingProduct) {
+      throw new AppError('Ja existe um produto com esse nome.', 409)
     }
 
-    return { ok: true }
-  },
+    return productRepository.createProduct(product)
+  }
+
+  update(id: string, data: UpdateProductDTO): Product {
+    const currentProduct = productRepository.getProductById(id)
+
+    if (!currentProduct) {
+      throw new AppError('Produto nao encontrado.', 404)
+    }
+
+    if (currentProduct.categoryId !== data.categoryId) {
+      const category = categoryRepository.getCategoryById(data.categoryId)
+
+      if (!category) {
+        throw new AppError('Categoria informada nao existe.', 404)
+      }
+    }
+
+    const product = Product.create({ ...data, id })
+    const existingProduct = productRepository.findByName(product.name)
+
+    if (existingProduct && existingProduct.id !== id) {
+      throw new AppError('Ja existe um produto com esse nome.', 409)
+    }
+
+    const updatedProduct = productRepository.updateProduct(product)
+
+    if (!updatedProduct) {
+      throw new AppError('Produto nao encontrado.', 404)
+    }
+
+    return updatedProduct
+  }
+
+  delete(id: string): void {
+    const product = productRepository.getProductById(id)
+
+    if (!product) {
+      throw new AppError('Produto nao encontrado.', 404)
+    }
+
+    productRepository.deleteProduct(id)
+  }
 }
+
+export const productsService = new ProductService()
